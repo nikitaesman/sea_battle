@@ -1,6 +1,10 @@
 package game
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
 
 // 4 одно-палубных
 // 3 двух-палубных
@@ -63,4 +67,21 @@ func PrintGameBoard(board GameBoard) {
 			fmt.Printf("%v  ", "◻") //🔥❌◻
 		}
 	}
+}
+
+func Turn() {
+
+}
+
+func getUserInput(msg string) (string, error) {
+	fmt.Println(msg)
+
+	reader := bufio.NewReader(os.Stdin)
+
+	result, err := reader.ReadString('\n')
+
+	if err != nil {
+		return "", fmt.Println("Something went wrong occure you input a turn. Please try again.")
+	}
+
 }

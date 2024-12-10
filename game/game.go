@@ -12,17 +12,18 @@ import (
 
 const BOARD_SIZE int = 10
 
-type ShipDeck struct {
-	isTouched bool
-	isDead    bool
+type Field struct {
+	isShip     bool
+	isHit      bool
+	isShipDead bool
 }
 
-type GameBoard = [BOARD_SIZE][BOARD_SIZE]*ShipDeck
+type GameBoard = [BOARD_SIZE][BOARD_SIZE]*Field
 
 func GetBoard() GameBoard {
 	board := getEmptyBoard()
 
-	RandomizeShips(&board)
+	PlaceAllShips(&board)
 
 	return board
 }
@@ -31,23 +32,20 @@ func getEmptyBoard() GameBoard {
 	var board GameBoard = GameBoard{}
 
 	for i := 0; i < BOARD_SIZE; i++ {
-		row := [BOARD_SIZE]*ShipDeck{}
+		row := [BOARD_SIZE]*Field{}
 
 		for j := 0; j < BOARD_SIZE; j++ {
-			row[j] = nil
+			row[j] = &Field{
+				isShip:     false,
+				isHit:      false,
+				isShipDead: false,
+			}
 		}
 
 		board[i] = row
 	}
 
 	return board
-}
-
-func RandomizeShips(board *GameBoard) {
-	board[0][0] = &ShipDeck{
-		isTouched: false,
-		isDead:    false,
-	}
 }
 
 var RowsAlphabet = [BOARD_SIZE]string{
@@ -63,57 +61,169 @@ var RowsAlphabet = [BOARD_SIZE]string{
 	"J",
 }
 
-func PrintGameBoard(board GameBoard) {
-	fmt.Println()
-
-	fmt.Print("   ")
-
-	for i := range RowsAlphabet {
-		fmt.Printf("%v  ", RowsAlphabet[i])
-	}
-
-	for i, row := range board {
-		//fmt.Printf("\n%v", row)
-		fmt.Println()
-
-		if i == 9 {
-			fmt.Printf("%v ", i+1)
-		} else {
-			fmt.Printf("%v  ", i+1)
-		}
-
-		for _, value := range row {
-
-			if value == {
-				fmt.Printf("%v ", "🔥")
-			} else {
-				fmt.Printf("%v ", "◻ ")
-				//fmt.Printf("%v  ", "■")
-			}
-
-			//🔥❌◻
-		}
-	}
-	fmt.Println()
-	fmt.Println()
-}
-
 type Cords struct {
-	X uint8
-	Y uint8
+	X int
+	Y int
 }
 
 func Turn(board *GameBoard, cords Cords) error {
+	field, err := GetFieldByCords(board, cords)
+
+	if err != nil {
+		return err
+	}
+
+	if field.isHit {
+		return errors.New("already existed turn")
+	}
+
+	field.isHit = true
+
+	if !field.isShip {
+		return nil
+	}
+
+	ship, err := getCompositeShip(board, cords)
+
+	fmt.Println("ship is")
+	fmt.Printf("\n%v", ship)
+	for _, part := range ship {
+		fmt.Printf("\n%v", part)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if checkShipIsDead(ship) {
+		makeShipDead(ship)
+	}
+
+	return nil
+}
+
+func checkShipIsDead(ship []*Field) bool {
+	for _, partOfShip := range ship {
+		if !partOfShip.isHit {
+			return false
+		}
+	}
+
+	return true
+}
+
+func makeShipDead(ship []*Field) {
+	for _, partOfShip := range ship {
+		partOfShip.isShipDead = true
+	}
+}
+
+func getCompositeShip(board *GameBoard, cords Cords) ([]*Field, error) {
+	field, err := GetFieldByCords(board, cords)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !field.isShip {
+		return nil, errors.New("getCompositeShip: field should be an ship")
+	}
+
+	shipFields := []*Field{field}
+
+	checkShifts := []Cords{
+		{
+			X: 0,
+			Y: -1,
+		},
+		{
+			X: 1,
+			Y: 0,
+		},
+		{
+			X: 0,
+			Y: 1,
+		},
+		{
+			X: -1,
+			Y: 0,
+		},
+	}
+
+	for _, shift := range checkShifts {
+		shipFields = getShipAppendSlice(
+			board,
+			cords,
+			shift,
+			shipFields,
+		)
+	}
+
+	return shipFields, nil
+}
+
+func getShipAppendSlice(
+	board *GameBoard,
+	cords Cords,
+	shift Cords,
+	shipFields []*Field,
+) []*Field {
+	fmt.Println("getShipAppendSlice call")
+	field, err := getFieldByShift(board, cords, shift)
+	fmt.Printf("\nCords%v", cords)
+	fmt.Printf("\n shift%v", shift)
+	fmt.Printf("\n field link %v\n", &field)
+	fmt.Printf("\n field%v\n", field)
+
+	if err != nil {
+		return shipFields
+	}
+
+	if field.isShip {
+		shipFields = append(shipFields, field)
+
+		newCords := Cords{
+			X: cords.X + shift.X,
+			Y: cords.Y + shift.Y,
+		}
+
+		fmt.Printf("\newCords%v", newCords)
+
+		return getShipAppendSlice(board, newCords, shift, shipFields)
+	}
+
+	return shipFields
+}
+
+func GetFieldByCords(board *GameBoard, cords Cords) (*Field, error) {
 	x, y := cords.X, cords.Y
 
 	if x > 10 {
-		return errors.New("x coord is too big")
+		return nil, errors.New("x coord is too big. Supported range 1-10")
 	}
+	if x < 1 {
+		return nil, errors.New("x coord is too small. Supported range 1-10")
+	}
+
 	if y > 10 {
-		return errors.New("y coord is too big")
+		return nil, errors.New("y coord is too big. Supported range 1-10")
+	}
+	if y < 1 {
+		return nil, errors.New("y coord is too small. Supported range 1-10")
 	}
 
-	board[y-1][x-1] = true
+	return board[y-1][x-1], nil
+}
 
-	return nil
+func getFieldByShift(board *GameBoard, cords Cords, shift Cords) (*Field, error) {
+	if shift.X == 0 && shift.Y == 0 {
+		return nil, errors.New("shift cords should not be zero")
+	}
+
+	cordsWithShift := Cords{
+		X: cords.X + shift.X,
+		Y: cords.Y + shift.Y,
+	}
+
+	return GetFieldByCords(board, cordsWithShift)
 }

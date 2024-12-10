@@ -29,20 +29,18 @@ func ParseUserInputToCords(input string) (*game.Cords, error) {
 		return nil, errors.New("input should not contain spaces")
 	}
 
-	fmt.Println("len(input)", len(input))
-
 	if len(input) != 2 {
 		return nil, errors.New("input should be like 'A6' or 'J5'")
 	}
 
-	var x uint8
+	var x int
 	var isFoundRune bool = false
 
 	firstRune, secondRune := input[0], input[1]
 
 	for i, value := range game.RowsAlphabet {
 		if strings.ToUpper(string(firstRune)) == value {
-			x = uint8(i + 1)
+			x = i + 1
 			isFoundRune = true
 		}
 	}
@@ -51,7 +49,7 @@ func ParseUserInputToCords(input string) (*game.Cords, error) {
 		return nil, errors.New("first symbol is incorrect")
 	}
 
-	value, err := strconv.ParseUint(string(secondRune), 10, 8)
+	value, err := strconv.ParseInt(string(secondRune), 10, 8)
 
 	if err != nil {
 		return nil, errors.New("second symbol is incorrect")
@@ -63,7 +61,7 @@ func ParseUserInputToCords(input string) (*game.Cords, error) {
 
 	coords := game.Cords{
 		X: x,
-		Y: uint8(value),
+		Y: int(value),
 	}
 
 	return &coords, nil

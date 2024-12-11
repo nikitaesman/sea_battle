@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -10,7 +9,6 @@ type Ship struct {
 	isHorizontal bool
 	x            int
 	y            int
-	//positions [][2]int // Массив позиций, занимаемых кораблем
 }
 
 func PlaceAllShips(board *GameBoard) {
@@ -27,14 +25,9 @@ func PlaceAllShips(board *GameBoard) {
 		for !placed {
 			ship.x = rand.Intn(BOARD_SIZE) + 1
 			ship.y = rand.Intn(BOARD_SIZE) + 1
-			fmt.Println("asd", ship)
 			ship.isHorizontal = true //rand.Intn(2) == 0 // случайно выбираем ориентацию корабля
 
-			canPlaceShip := canPlaceShip(board, ship)
-
-			fmt.Println(canPlaceShip)
-
-			if canPlaceShip {
+			if canPlaceShip(board, ship) {
 				placeShip(board, ship)
 				placed = true
 			}
@@ -45,14 +38,10 @@ func PlaceAllShips(board *GameBoard) {
 func placeShip(board *GameBoard, ship Ship) {
 	if ship.isHorizontal {
 		for i := 0; i < ship.size; i++ {
-			field, err := GetFieldByCords(board, Cords{
+			field, _ := GetFieldByCords(board, Cords{
 				X: ship.x + i,
 				Y: ship.y,
 			})
-
-			if err != nil {
-				fmt.Println(err)
-			}
 
 			field.isShip = true
 		}
@@ -81,18 +70,18 @@ func canPlaceShip(board *GameBoard, ship Ship) bool {
 	}
 
 	for shift := -1; shift < 2; shift++ {
-		for i := -1; i <= ship.size+1; i++ {
+		for i := -1; i <= ship.size; i++ {
 			var cords Cords
 
 			if ship.isHorizontal {
 				cords = Cords{
-					X: ship.x + i + shift,
+					X: ship.x + i,
 					Y: ship.y + shift,
 				}
 			} else {
 				cords = Cords{
 					X: ship.x + shift,
-					Y: ship.y + i + shift,
+					Y: ship.y + i,
 				}
 			}
 

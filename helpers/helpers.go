@@ -29,14 +29,14 @@ func ParseUserInputToCords(input string) (*game.Cords, error) {
 		return nil, errors.New("input should not contain spaces")
 	}
 
-	if len(input) != 2 {
+	if len(input) != 3 && len(input) != 2 {
 		return nil, errors.New("input should be like 'A6' or 'J5'")
 	}
 
 	var x int
 	var isFoundRune bool = false
 
-	firstRune, secondRune := input[0], input[1]
+	firstRune := input[0]
 
 	for i, value := range game.RowsAlphabet {
 		if strings.ToUpper(string(firstRune)) == value {
@@ -49,14 +49,14 @@ func ParseUserInputToCords(input string) (*game.Cords, error) {
 		return nil, errors.New("first symbol is incorrect")
 	}
 
-	value, err := strconv.ParseInt(string(secondRune), 10, 8)
+	value, err := getParseNumericFromString(input[1:])
 
 	if err != nil {
-		return nil, errors.New("second symbol is incorrect")
+		return nil, fmt.Errorf("\n second symbol is incorrect %v", err)
 	}
 
-	if value > 10 {
-		return nil, errors.New("second symbol too big. Should be less equal then 10")
+	if value < 1 || value > 10 {
+		return nil, errors.New("second symbol too big. Should be great then equal 1 and less equal then 10")
 	}
 
 	coords := game.Cords{
@@ -65,4 +65,14 @@ func ParseUserInputToCords(input string) (*game.Cords, error) {
 	}
 
 	return &coords, nil
+}
+
+func getParseNumericFromString(str string) (int, error) {
+	value, err := strconv.ParseInt(str, 10, 8)
+
+	if err != nil {
+		return 0, errors.New("number is incorrect")
+	}
+
+	return int(value), nil
 }

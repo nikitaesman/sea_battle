@@ -85,12 +85,6 @@ func Turn(board *GameBoard, cords Cords) error {
 
 	ship, err := getCompositeShip(board, cords)
 
-	fmt.Println("ship is")
-	fmt.Printf("\n%v", ship)
-	for _, part := range ship {
-		fmt.Printf("\n%v", part)
-	}
-
 	if err != nil {
 		return err
 	}

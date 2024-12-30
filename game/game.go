@@ -3,6 +3,7 @@ package game
 import (
 	"errors"
 	"fmt"
+	"os"
 )
 
 // 4 одно-палубных
@@ -91,6 +92,7 @@ func Turn(board *GameBoard, cords Cords) error {
 
 	if checkShipIsDead(ship) {
 		makeShipDead(ship)
+		checkGameFinish(board)
 	}
 
 	return nil
@@ -162,12 +164,7 @@ func getShipAppendSlice(
 	shift Cords,
 	shipFields []*Field,
 ) []*Field {
-	fmt.Println("getShipAppendSlice call")
 	field, err := getFieldByShift(board, cords, shift)
-	fmt.Printf("\nCords%v", cords)
-	fmt.Printf("\n shift%v", shift)
-	fmt.Printf("\n field link %v\n", &field)
-	fmt.Printf("\n field%v\n", field)
 
 	if err != nil {
 		return shipFields
@@ -180,8 +177,6 @@ func getShipAppendSlice(
 			X: cords.X + shift.X,
 			Y: cords.Y + shift.Y,
 		}
-
-		fmt.Printf("\newCords%v", newCords)
 
 		return getShipAppendSlice(board, newCords, shift, shipFields)
 	}
@@ -220,4 +215,25 @@ func getFieldByShift(board *GameBoard, cords Cords, shift Cords) (*Field, error)
 	}
 
 	return GetFieldByCords(board, cordsWithShift)
+}
+
+func checkGameFinish(board *GameBoard) {
+	isGameFinish := true
+
+	for _, row := range board {
+		for _, field := range row {
+			if field.isShip && !field.isHit {
+				isGameFinish = false
+			}
+		}
+	}
+
+	if isGameFinish {
+		finishGame()
+	}
+}
+
+func finishGame() {
+	fmt.Println("\nYou win! Thanks for game")
+	os.Exit(0)
 }
